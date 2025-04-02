@@ -1,6 +1,6 @@
-# Aplicaciones Streamlit de lcgaibor
+# Aplicaciones Streamlit 
 
-Este repositorio contiene una colección de aplicaciones desarrolladas con Streamlit.
+Este repositorio contiene una colección de aplicaciones desarrolladas para desplegar y usar en Streamlit.
 
 ## Aplicaciones disponibles
 
@@ -14,4 +14,4 @@ Un dashboard interactivo para visualizar y analizar riesgos en diferentes activo
 
 ## Cómo ejecutar las aplicaciones
 
-Cada aplicación tiene su propio directorio con instrucciones y dependencias específicas. Navega a la carpeta de la aplicación que te interese y sigue las instrucciones en su README.md.
+Cada aplicación tiene su propio directorio con instrucciones y dependencias específicas en su README.md.
