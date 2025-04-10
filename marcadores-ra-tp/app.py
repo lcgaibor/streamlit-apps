@@ -325,7 +325,7 @@ def main():
             
             # Enlace para descargar
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"marcador_{atomic_number:03d}_{symbol}_{timestamp}.png"
+            filename = f"{atomic_number:03d}_{symbol}_{timestamp}.png"
             st.markdown(get_image_download_link(pil_img, filename, "📥 Descargar Marcador"), unsafe_allow_html=True)
         
         with col2:
