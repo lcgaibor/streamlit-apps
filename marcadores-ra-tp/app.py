@@ -107,7 +107,7 @@ class ElementARMarkerGenerator:
     
     def generate_element_marker(self, symbol, name, atomic_number, show_symbol=False, show_atomic_number=True):
         """
-        Genera un marcador RA único para un elemento químico.
+        Genera un marcador RA único para un elemento químico optimizado para impresión 3D.
         
         Args:
             symbol (str): Símbolo del elemento.
@@ -124,71 +124,98 @@ class ElementARMarkerGenerator:
         img = Image.new('RGB', (img_size, img_size), color='white')
         draw = ImageDraw.Draw(img)
         
-        # Dibujar un borde negro
+        # Dibujar un borde negro más grueso
         draw.rectangle(
             [(0, 0), (img_size-1, img_size-1)],
             outline='black',
-            width=10
+            width=12
         )
         
         # Crear un patrón único basado en el número atómico
         np.random.seed(atomic_number)  # Usar número atómico como semilla
         
-        # Generar una matriz de celdas para el marcador
-        grid_size = 5
+        # Generar una matriz de celdas para el marcador (8x8 en lugar de 5x5)
+        grid_size = 8  # Incrementado a 8x8
         cell_size = (self.marker_size) // grid_size
         
-        # Dibujar celdas negras basadas en un patrón único
+        # Dibujar celdas con diferentes formas basadas en un patrón único
         for i in range(grid_size):
             for j in range(grid_size):
                 # Generar un valor aleatorio determinista basado en el número atómico
-                if np.random.random() > 0.5:
+                rand_val = np.random.random()
+                if rand_val > 0.5:  # 50% de probabilidad de dibujar algo
                     x0 = self.border_size + i * cell_size
                     y0 = self.border_size + j * cell_size
                     x1 = x0 + cell_size
                     y1 = y0 + cell_size
-                    draw.rectangle([(x0, y0), (x1, y1)], fill='black')
+                    
+                    shape_type = np.random.random()
+                    
+                    # 70% cuadrados, 30% círculos (compatibles con impresión 3D)
+                    if shape_type < 0.7:
+                        # Dibujar un cuadrado
+                        draw.rectangle([(x0, y0), (x1, y1)], fill='black')
+                    else:
+                        # Dibujar un círculo
+                        draw.ellipse([(x0, y0), (x1, y1)], fill='black')
+    
         
         # Agregar información del elemento al marcador si se solicita
         if show_symbol:
             try:
-                font_symbol = ImageFont.truetype("arial.ttf", 72)
+                # Usar una fuente más grande para el símbolo
+                font_symbol = ImageFont.truetype("arial.ttf", 120)  # Aumentado de 72 a 120
             except IOError:
                 # Si no se encuentra la fuente Arial, usar fuente por defecto
                 font_symbol = ImageFont.load_default()
             
-            # Agregar símbolo centrado en la celda central
-            center_cell_x = self.border_size + (grid_size // 2) * cell_size
-            center_cell_y = self.border_size + (grid_size // 2) * cell_size
+            # Agregar símbolo en una posición no centrada para romper simetría
+            symbol_pos_x = self.border_size + (grid_size // 3) * cell_size
+            symbol_pos_y = self.border_size + (grid_size // 3) * cell_size
             
             # Obtener tamaño del texto para centrarlo
             symbol_width = draw.textlength(symbol, font=font_symbol)
             
-            # Dibujar un fondo blanco para el símbolo
-            draw.rectangle(
-                [(center_cell_x - 40, center_cell_y - 40), 
-                 (center_cell_x + 40, center_cell_y + 40)],
-                fill='white'
+            # Dibujar un círculo blanco para el fondo del símbolo
+            circle_radius = max(symbol_width, 90) // 2 + 20
+            draw.ellipse(
+                [(symbol_pos_x - circle_radius, symbol_pos_y - circle_radius), 
+                 (symbol_pos_x + circle_radius, symbol_pos_y + circle_radius)],
+                fill='white', outline='black', width=3
             )
             
             # Dibujar el símbolo
             draw.text(
-                (center_cell_x - symbol_width/2, center_cell_y - 36),
+                (symbol_pos_x - symbol_width/2, symbol_pos_y - 60),
                 symbol,
                 fill='black',
                 font=font_symbol
             )
         
-        # Agregar número atómico en la esquina
+        # Agregar número atómico en una posición más destacada
         if show_atomic_number:
             try:
-                font_info = ImageFont.truetype("arial.ttf", 24)
+                font_info = ImageFont.truetype("arial.ttf", 36)  # Tamaño aumentado
             except IOError:
                 font_info = ImageFont.load_default()
                 
+            # Posición en la esquina opuesta al símbolo para mejor contraste
+            atomic_text = str(atomic_number)
+            text_width = draw.textlength(atomic_text, font=font_info)
+            text_x = img_size - self.border_size - text_width - 15
+            text_y = img_size - self.border_size - 40
+            
+            # Dibujar un círculo blanco para el fondo del número
+            draw.ellipse(
+                [(text_x - 15, text_y - 10), 
+                 (text_x + text_width + 15, text_y + 40)],
+                fill='white', outline='black', width=2
+            )
+            
+            # Dibujar el número atómico
             draw.text(
-                (self.border_size + 10, self.border_size + 10),
-                str(atomic_number),
+                (text_x, text_y),
+                atomic_text,
                 fill='black',
                 font=font_info
             )
@@ -220,7 +247,8 @@ def main():
     st.markdown("""
     Esta aplicación genera marcadores de Realidad Aumentada (RA) únicos para cada elemento 
     de la tabla periódica. Cada marcador se genera utilizando el número atómico del elemento 
-    como semilla, lo que garantiza un patrón único y reconocible.
+    como semilla, lo que garantiza un patrón único y reconocible, optimizado para Vuforia y 
+    para impresión 3D.
     """)
 
     # Inicializar generador
@@ -280,7 +308,7 @@ def main():
     
     # Opciones de visualización
     st.sidebar.subheader("Opciones de Visualización")
-    show_symbol = st.sidebar.checkbox("Mostrar símbolo del elemento", value=False)
+    show_symbol = st.sidebar.checkbox("Mostrar símbolo del elemento", value=True)  # Por defecto True ahora
     show_atomic_number = st.sidebar.checkbox("Mostrar número atómico", value=True)
     
     # Botón para generar
@@ -320,7 +348,7 @@ def main():
             # Convertir a formato de imagen
             pil_img = Image.fromarray(marker)
             
-            # Mostrar imagen (usando use_container_width en lugar de use_column_width)
+            # Mostrar imagen
             st.image(pil_img, caption=f"Marcador RA para {name}", use_container_width=True)
             
             # Enlace para descargar
@@ -340,14 +368,15 @@ def main():
             </div>
             """, unsafe_allow_html=True)
             
-            # Explicar cómo funciona el marcador (versión condensada)
+            # Explicar cómo funciona el marcador
             st.markdown("""
-            ### Sobre el marcador RA
+            ### Características del marcador
             
             * Se utiliza el algoritmo Mersenne Twister.
-            * El algoritmo aplica transformaciones matemáticas, desplazamientos de bits y XOR.
+            * Mezcla de cuadrados y círculos para mejor detección
             * Este método garantiza que se generará exactamente el mismo patrón.
-            * La probabilidad de que cada celda sea negra o blanca se determina comparando el valor generado con 0.5.
+            * El algoritmo aplica transformaciones matemáticas, desplazamientos de bits y XOR.
+            * Patrón único generado usando el número atómico
             """)
         
         # Instrucciones de uso
@@ -355,9 +384,9 @@ def main():
         ### Cómo usar el marcador
         
         1. Descarga la imagen del marcador
-        2. Imprímela en papel o muéstrala en una pantalla
-        3. Utiliza una aplicación compatible con marcadores AR para escanear la imagen
-        4. La aplicación reconocerá el patrón único y mostrará información o contenido 3D relacionado con el elemento
+        2. Para uso en AR (Vuforia): Imprime la imagen en papel o muéstrala en pantalla
+        3. Para impresión 3D: Importa el archivo a TinkerCAD para añadir relieve
+        4. En la impresión 3D, las áreas negras serán las que tengan relieve
         """)
     
     # Pie de página
