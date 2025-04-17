@@ -292,8 +292,8 @@ def main():
     
     # Opciones de visualización
     st.sidebar.subheader("Opciones de Visualización")
-    show_symbol = st.sidebar.checkbox("Mostrar símbolo del elemento", value=True)  # Por defecto True ahora
-    show_atomic_number = st.sidebar.checkbox("Mostrar número atómico", value=True)
+    show_symbol = st.sidebar.checkbox("Mostrar símbolo del elemento", value=False)  # Por defecto True ahora
+    show_atomic_number = st.sidebar.checkbox("Mostrar número atómico", value=False)
     
     # Botón para generar
     generate_button = st.sidebar.button("Generar Marcador")
