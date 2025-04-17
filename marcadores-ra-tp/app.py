@@ -119,7 +119,6 @@ class ElementARMarkerGenerator:
         Returns:
             np.array: Imagen del marcador como array de NumPy.
         """
-        # Crear una imagen base blanca
         img_size = self.marker_size + 2 * self.border_size
         img = Image.new('RGB', (img_size, img_size), color='white')
         draw = ImageDraw.Draw(img)
@@ -134,8 +133,8 @@ class ElementARMarkerGenerator:
         # Crear un patrón único basado en el número atómico
         np.random.seed(atomic_number)  # Usar número atómico como semilla
         
-        # Generar una matriz de celdas para el marcador (8x8 en lugar de 5x5)
-        grid_size = 8  # Incrementado a 8x8
+        # Generar una matriz de celdas para el marcador
+        grid_size = 8  
         cell_size = (self.marker_size) // grid_size
         
         # Dibujar celdas con diferentes formas basadas en un patrón único
@@ -143,7 +142,7 @@ class ElementARMarkerGenerator:
             for j in range(grid_size):
                 # Generar un valor aleatorio determinista basado en el número atómico
                 rand_val = np.random.random()
-                if rand_val > 0.5:  # 50% de probabilidad de dibujar algo
+                if rand_val > 0.5:  # 50% de probabilidad de dibujar 
                     x0 = self.border_size + i * cell_size
                     y0 = self.border_size + j * cell_size
                     x1 = x0 + cell_size
@@ -151,7 +150,7 @@ class ElementARMarkerGenerator:
                     
                     shape_type = np.random.random()
                     
-                    # 70% cuadrados, 30% círculos (compatibles con impresión 3D)
+                    # 70% cuadrados, 30% círculos
                     if shape_type < 0.7:
                         # Dibujar un cuadrado
                         draw.rectangle([(x0, y0), (x1, y1)], fill='black')
@@ -160,31 +159,26 @@ class ElementARMarkerGenerator:
                         draw.ellipse([(x0, y0), (x1, y1)], fill='black')
     
         
-        # Agregar información del elemento al marcador si se solicita
+        
         if show_symbol:
             try:
-                # Usar una fuente más grande para el símbolo
-                font_symbol = ImageFont.truetype("arial.ttf", 120)  # Aumentado de 72 a 120
+                # Fuente para la letra
+                font_symbol = ImageFont.truetype("arial.ttf", 120)  
             except IOError:
-                # Si no se encuentra la fuente Arial, usar fuente por defecto
                 font_symbol = ImageFont.load_default()
             
-            # Agregar símbolo en una posición no centrada para romper simetría
             symbol_pos_x = self.border_size + (grid_size // 3) * cell_size
             symbol_pos_y = self.border_size + (grid_size // 3) * cell_size
             
-            # Obtener tamaño del texto para centrarlo
             symbol_width = draw.textlength(symbol, font=font_symbol)
             
-            # Dibujar un círculo blanco para el fondo del símbolo
             circle_radius = max(symbol_width, 90) // 2 + 20
             draw.ellipse(
                 [(symbol_pos_x - circle_radius, symbol_pos_y - circle_radius), 
-                 (symbol_pos_x + circle_radius, symbol_pos_y + circle_radius)],
+                (symbol_pos_x + circle_radius, symbol_pos_y + circle_radius)],
                 fill='white', outline='black', width=3
             )
             
-            # Dibujar el símbolo
             draw.text(
                 (symbol_pos_x - symbol_width/2, symbol_pos_y - 60),
                 symbol,
@@ -192,27 +186,23 @@ class ElementARMarkerGenerator:
                 font=font_symbol
             )
         
-        # Agregar número atómico en una posición más destacada
         if show_atomic_number:
             try:
-                font_info = ImageFont.truetype("arial.ttf", 36)  # Tamaño aumentado
+                font_info = ImageFont.truetype("arial.ttf", 36)  
             except IOError:
                 font_info = ImageFont.load_default()
                 
-            # Posición en la esquina opuesta al símbolo para mejor contraste
             atomic_text = str(atomic_number)
             text_width = draw.textlength(atomic_text, font=font_info)
             text_x = img_size - self.border_size - text_width - 15
             text_y = img_size - self.border_size - 40
             
-            # Dibujar un círculo blanco para el fondo del número
             draw.ellipse(
                 [(text_x - 15, text_y - 10), 
-                 (text_x + text_width + 15, text_y + 40)],
+                (text_x + text_width + 15, text_y + 40)],
                 fill='white', outline='black', width=2
             )
             
-            # Dibujar el número atómico
             draw.text(
                 (text_x, text_y),
                 atomic_text,
@@ -220,7 +210,6 @@ class ElementARMarkerGenerator:
                 font=font_info
             )
         
-        # Convertir a matriz numpy y a escala de grises
         marker_array = np.array(img)
         marker_gray = cv2.cvtColor(marker_array, cv2.COLOR_RGB2GRAY)
         
@@ -251,16 +240,13 @@ def main():
     para impresión 3D.
     """)
 
-    # Inicializar generador
     generator = ElementARMarkerGenerator()
     
-    # Sidebar para opciones
     st.sidebar.header("Opciones de Configuración")
     
     # Selector de elemento
     st.sidebar.subheader("Selecciona un Elemento")
     
-    # Crear opciones de selección por categoría
     element_categories = {
         "Metales alcalinos": [3, 11, 19, 37, 55, 87],
         "Metales alcalinotérreos": [4, 12, 20, 38, 56, 88],
@@ -282,7 +268,6 @@ def main():
     # Obtener elementos de la categoría seleccionada
     category_elements = element_categories[category_select]
     
-    # Crear lista de opciones para el selectbox
     element_options = []
     for atomic_num in category_elements:
         element = generator.get_element_by_atomic_number(atomic_num)
@@ -290,14 +275,13 @@ def main():
             symbol, name, _ = element
             element_options.append(f"{atomic_num}: {name} ({symbol})")
     
-    # Seleccionar elemento de la categoría
     selected_element_str = st.sidebar.selectbox(
         "Elemento",
         options=element_options,
         index=0 if element_options else None
     )
     
-    # Permitir también búsqueda por número atómico directo
+    # Permitir  búsqueda por número atómico 
     st.sidebar.subheader("O ingresa un número atómico")
     atomic_number_input = st.sidebar.number_input(
         "Número atómico (1-118)",
@@ -314,23 +298,20 @@ def main():
     # Botón para generar
     generate_button = st.sidebar.button("Generar Marcador")
     
-    # Determinar el número atómico del elemento seleccionado
     if generate_button:
         if selected_element_str and ":" in selected_element_str:
             selected_atomic_number = int(selected_element_str.split(':')[0])
         else:
             selected_atomic_number = atomic_number_input
     else:
-        # Usar el valor predeterminado al inicio
         selected_atomic_number = atomic_number_input
     
-    # Obtener el elemento seleccionado
+    # Obtener el elemento 
     selected_element = generator.get_element_by_atomic_number(selected_atomic_number)
     
     if selected_element:
         symbol, name, atomic_number = selected_element
         
-        # Crear un layout de dos columnas
         col1, col2 = st.columns([2, 1])
         
         with col1:
@@ -345,7 +326,6 @@ def main():
                 show_atomic_number=show_atomic_number
             )
             
-            # Convertir a formato de imagen
             pil_img = Image.fromarray(marker)
             
             # Mostrar imagen
@@ -368,7 +348,7 @@ def main():
             </div>
             """, unsafe_allow_html=True)
             
-            # Explicar cómo funciona el marcador
+            
             st.markdown("""
             ### Características del marcador
             
