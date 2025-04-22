@@ -247,16 +247,18 @@ def main():
     # Selector de elemento
     st.sidebar.subheader("Selecciona un Elemento")
     
+    # Nueva clasificación de elementos por categorías
     element_categories = {
-        "Metales alcalinos": [3, 11, 19, 37, 55, 87],
-        "Metales alcalinotérreos": [4, 12, 20, 38, 56, 88],
-        "Metales de transición": list(range(21, 31)) + list(range(39, 49)) + list(range(72, 81)) + list(range(104, 113)),
-        "Lantánidos": list(range(57, 72)),
-        "Actínidos": list(range(89, 104)),
-        "Otros metales": [13, 31, 49, 50, 81, 82, 83, 113, 114, 115, 116],
-        "Metaloides": [5, 14, 32, 33, 51, 52, 84],
-        "No metales": [1, 6, 7, 8, 9, 15, 16, 17, 34, 35, 53],
-        "Gases nobles": [2, 10, 18, 36, 54, 86, 118]
+        "Metales Alcalinos (6 elementos)": [3, 11, 19, 37, 55, 87],
+        " Metales Alcalinotérreos (6 elementos)": [4, 12, 20, 38, 56, 88],
+        " Metales de Transición (34 elementos)": [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 72, 73, 74, 75, 76, 77, 78, 79, 80, 104, 105, 106, 107, 108],
+        " Metales Post-Transición (12 elementos)": [13, 31, 49, 50, 81, 82, 83, 84, 113, 114, 115, 116],
+        " Metaloides (7 elementos)": [5, 14, 32, 33, 51, 52, 85],
+        " No Metales Reactivos (9 elementos)": [1, 6, 7, 8, 9, 15, 16, 17, 34],
+        " Gases Nobles (6 elementos)": [2, 10, 18, 36, 54, 86],
+        " Lantánidos (15 elementos)": list(range(57, 72)),
+        " Actínidos (15 elementos)": list(range(89, 104)),
+        " Propiedades Químicas Desconocidas (4 elementos)": [112, 113, 114, 118]
     }
     
     category_select = st.sidebar.selectbox(
@@ -281,7 +283,7 @@ def main():
         index=0 if element_options else None
     )
     
-    # Permitir  búsqueda por número atómico 
+    # Permitir búsqueda por número atómico 
     st.sidebar.subheader("O ingresa un número atómico")
     atomic_number_input = st.sidebar.number_input(
         "Número atómico (1-118)",
@@ -292,8 +294,8 @@ def main():
     
     # Opciones de visualización
     st.sidebar.subheader("Opciones de Visualización")
-    show_symbol = st.sidebar.checkbox("Mostrar símbolo del elemento", value=True)  # Por defecto True ahora
-    show_atomic_number = st.sidebar.checkbox("Mostrar número atómico", value=True)
+    show_symbol = st.sidebar.checkbox("Mostrar símbolo del elemento", value=False)
+    show_atomic_number = st.sidebar.checkbox("Mostrar número atómico", value=False)
     
     # Botón para generar
     generate_button = st.sidebar.button("Generar Marcador")
