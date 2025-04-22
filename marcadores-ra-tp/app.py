@@ -294,7 +294,11 @@ def main():
     
     # Opciones de visualización
     st.sidebar.subheader("Opciones de Visualización")
+<<<<<<< HEAD
     show_symbol = st.sidebar.checkbox("Mostrar símbolo del elemento", value=False)
+=======
+    show_symbol = st.sidebar.checkbox("Mostrar símbolo del elemento", value=False)  # Por defecto True ahora
+>>>>>>> e9f3d68c97461ebbf3e0ed17bbcc55c2cbe041ed
     show_atomic_number = st.sidebar.checkbox("Mostrar número atómico", value=False)
     
     # Botón para generar
@@ -374,8 +378,7 @@ def main():
     # Pie de página
     st.sidebar.markdown("---")
     st.sidebar.markdown("### Acerca de")
-    st.sidebar.markdown("""
-    Desarrollado por lcgaibor.  
+    st.sidebar.markdown(""" 
     GitHub: [lcgaibor's apps](https://github.com/lcgaibor/streamlit-apps)
     """)
 
