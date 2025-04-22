@@ -372,8 +372,7 @@ def main():
     # Pie de página
     st.sidebar.markdown("---")
     st.sidebar.markdown("### Acerca de")
-    st.sidebar.markdown("""
-    Desarrollado por lcgaibor.  
+    st.sidebar.markdown(""" 
     GitHub: [lcgaibor's apps](https://github.com/lcgaibor/streamlit-apps)
     """)
 
