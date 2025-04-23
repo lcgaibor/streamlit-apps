@@ -5,6 +5,7 @@ from PIL import Image, ImageDraw, ImageFont
 import io
 import base64
 from datetime import datetime
+from styles import apply_styles
 
 # Configuración de la página
 st.set_page_config(
@@ -14,44 +15,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Aplicar estilo CSS personalizado
-st.markdown("""
-<style>
-    .main {
-        background-color: #f8f9fa;
-    }
-    .stApp {
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-    h1, h2, h3 {
-        color: #1e3d59;
-    }
-    .stButton>button {
-        background-color: #1e3d59;
-        color: white;
-        border-radius: 5px;
-        padding: 0.5rem 1rem;
-        font-weight: bold;
-    }
-    .stButton>button:hover {
-        background-color: #2e5d79;
-    }
-    .element-info {
-        background-color: #e6f2ff;
-        padding: 1rem;
-        border-radius: 5px;
-        margin: 1rem 0;
-    }
-    .marker-container {
-        background-color: white;
-        padding: 1rem;
-        border-radius: 5px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        margin: 1rem 0;
-    }
-</style>
-""", unsafe_allow_html=True)
+# Aplicar estilos personalizados
+apply_styles()
 
 class ElementARMarkerGenerator:
     def __init__(self):
@@ -157,8 +122,6 @@ class ElementARMarkerGenerator:
                     else:
                         # Dibujar un círculo
                         draw.ellipse([(x0, y0), (x1, y1)], fill='black')
-    
-        
         
         if show_symbol:
             try:
@@ -186,29 +149,49 @@ class ElementARMarkerGenerator:
                 font=font_symbol
             )
         
+        # Modificado: Número atómico en un cuadrito del mismo tamaño que la cuadrícula
         if show_atomic_number:
+            # Usar el mismo tamaño de celda que los cuadritos negros
+            # Colocarlo en la posición 7,7 (esquina inferior derecha)
+            i, j = 7, 7  # Posición del cuadrito (última celda en esquina inferior derecha)
+            
+            x0 = self.border_size + i * cell_size
+            y0 = self.border_size + j * cell_size
+            x1 = x0 + cell_size
+            y1 = y0 + cell_size
+            
+            # Dibujar un cuadrado blanco con borde negro
+            draw.rectangle([(x0, y0), (x1, y1)], fill='white', outline='black', width=3)
+            
+            # Determinar tamaño de fuente adecuado para el número
+            atomic_text = str(atomic_number)
             try:
-                font_info = ImageFont.truetype("arial.ttf", 36)  
+                # Ajustar el tamaño de la fuente según la longitud del número
+                if len(atomic_text) == 1:
+                    font_size = int(cell_size * 0.7)
+                elif len(atomic_text) == 2:
+                    font_size = int(cell_size * 0.6)
+                else:
+                    font_size = int(cell_size * 0.5)
+                
+                font_info = ImageFont.truetype("arial.ttf", font_size)
             except IOError:
                 font_info = ImageFont.load_default()
-                
-            atomic_text = str(atomic_number)
+            
+            # Calcular el ancho del texto para centrarlo
             text_width = draw.textlength(atomic_text, font=font_info)
-            text_x = img_size - self.border_size - text_width - 15
-            text_y = img_size - self.border_size - 40
+            text_x = x0 + (cell_size - text_width) / 2
+            text_y = y0 + (cell_size - font_size) / 2
             
-            draw.ellipse(
-                [(text_x - 15, text_y - 10), 
-                (text_x + text_width + 15, text_y + 40)],
-                fill='white', outline='black', width=2
-            )
-            
-            draw.text(
-                (text_x, text_y),
-                atomic_text,
-                fill='black',
-                font=font_info
-            )
+            # Texto en negrita simulado
+            for offset_x in range(-1, 2):
+                for offset_y in range(-1, 2):
+                    draw.text(
+                        (text_x + offset_x, text_y + offset_y),
+                        atomic_text,
+                        fill='black',
+                        font=font_info
+                    )
         
         marker_array = np.array(img)
         marker_gray = cv2.cvtColor(marker_array, cv2.COLOR_RGB2GRAY)
@@ -295,7 +278,7 @@ def main():
     # Opciones de visualización
     st.sidebar.subheader("Opciones de Visualización")
     show_symbol = st.sidebar.checkbox("Mostrar símbolo del elemento", value=False)
-    show_atomic_number = st.sidebar.checkbox("Mostrar número atómico", value=False)
+    show_atomic_number = st.sidebar.checkbox("Mostrar número atómico", value=True)
     
     # Botón para generar
     generate_button = st.sidebar.button("Generar Marcador")
