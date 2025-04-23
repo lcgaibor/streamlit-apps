@@ -7,7 +7,6 @@ import base64
 from datetime import datetime
 from styles import apply_styles
 
-# Configuración de la página
 st.set_page_config(
     page_title="Generador de Marcadores RA - Tabla Periódica",
     page_icon="🧪",
@@ -15,7 +14,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Aplicar estilos personalizados
 apply_styles()
 
 class ElementARMarkerGenerator:
@@ -168,11 +166,11 @@ class ElementARMarkerGenerator:
             try:
                 # Ajustar el tamaño de la fuente según la longitud del número
                 if len(atomic_text) == 1:
-                    font_size = int(cell_size * 0.7)
+                    font_size = int(cell_size * 0.9)
                 elif len(atomic_text) == 2:
-                    font_size = int(cell_size * 0.6)
+                    font_size = int(cell_size * 0.8)
                 else:
-                    font_size = int(cell_size * 0.5)
+                    font_size = int(cell_size * 0.7)
                 
                 font_info = ImageFont.truetype("arial.ttf", font_size)
             except IOError:
