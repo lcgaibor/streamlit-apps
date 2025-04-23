@@ -95,14 +95,12 @@ class ElementARMarkerGenerator:
             width=12
         )
         
-        # Crear un patrón único basado en el número atómico
         np.random.seed(atomic_number)  # Usar número atómico como semilla
         
         # Generar una matriz de celdas para el marcador
         grid_size = 8  
         cell_size = (self.marker_size) // grid_size
         
-        # Dibujar celdas con diferentes formas basadas en un patrón único
         for i in range(grid_size):
             for j in range(grid_size):
                 # Generar un valor aleatorio determinista basado en el número atómico
@@ -149,36 +147,32 @@ class ElementARMarkerGenerator:
                 font=font_symbol
             )
         
-        # Modificado: Número atómico en un cuadrito del mismo tamaño que la cuadrícula
+        
         if show_atomic_number:
-            # Usar el mismo tamaño de celda que los cuadritos negros
-            # Colocarlo en la posición 7,7 (esquina inferior derecha)
-            i, j = 7, 7  # Posición del cuadrito (última celda en esquina inferior derecha)
+            
+            i, j = 7, 7  
             
             x0 = self.border_size + i * cell_size
             y0 = self.border_size + j * cell_size
             x1 = x0 + cell_size
             y1 = y0 + cell_size
             
-            # Dibujar un cuadrado blanco con borde negro
             draw.rectangle([(x0, y0), (x1, y1)], fill='white', outline='black', width=3)
             
-            # Determinar tamaño de fuente adecuado para el número
             atomic_text = str(atomic_number)
             try:
                 # Ajustar el tamaño de la fuente según la longitud del número
                 if len(atomic_text) == 1:
-                    font_size = int(cell_size * 0.7)
+                    font_size = int(cell_size * 0.9)
                 elif len(atomic_text) == 2:
-                    font_size = int(cell_size * 0.6)
+                    font_size = int(cell_size * 0.8)
                 else:
-                    font_size = int(cell_size * 0.5)
+                    font_size = int(cell_size * 0.7)
                 
                 font_info = ImageFont.truetype("arial.ttf", font_size)
             except IOError:
                 font_info = ImageFont.load_default()
             
-            # Calcular el ancho del texto para centrarlo
             text_width = draw.textlength(atomic_text, font=font_info)
             text_x = x0 + (cell_size - text_width) / 2
             text_y = y0 + (cell_size - font_size) / 2
@@ -250,7 +244,6 @@ def main():
         index=0
     )
     
-    # Obtener elementos de la categoría seleccionada
     category_elements = element_categories[category_select]
     
     element_options = []
@@ -266,7 +259,6 @@ def main():
         index=0 if element_options else None
     )
     
-    # Permitir búsqueda por número atómico 
     st.sidebar.subheader("O ingresa un número atómico")
     atomic_number_input = st.sidebar.number_input(
         "Número atómico (1-118)",
@@ -275,7 +267,6 @@ def main():
         value=1
     )
     
-    # Opciones de visualización
     st.sidebar.subheader("Opciones de Visualización")
     show_symbol = st.sidebar.checkbox("Mostrar símbolo del elemento", value=False)
     show_atomic_number = st.sidebar.checkbox("Mostrar número atómico", value=True)
@@ -291,7 +282,6 @@ def main():
     else:
         selected_atomic_number = atomic_number_input
     
-    # Obtener el elemento 
     selected_element = generator.get_element_by_atomic_number(selected_atomic_number)
     
     if selected_element:
@@ -302,7 +292,6 @@ def main():
         with col1:
             st.subheader("Marcador RA generado")
             
-            # Generar marcador
             marker = generator.generate_element_marker(
                 symbol, 
                 name, 
@@ -313,10 +302,8 @@ def main():
             
             pil_img = Image.fromarray(marker)
             
-            # Mostrar imagen
             st.image(pil_img, caption=f"Marcador RA para {name}", use_container_width=True)
             
-            # Enlace para descargar
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{atomic_number:03d}_{symbol}_{timestamp}.png"
             st.markdown(get_image_download_link(pil_img, filename, "📥 Descargar Marcador"), unsafe_allow_html=True)
@@ -324,7 +311,6 @@ def main():
         with col2:
             st.subheader("Información del Elemento")
             
-            # Mostrar información del elemento
             st.markdown(f"""
             <div class="element-info">
                 <h3 style="text-align: center; color: black;">{symbol}</h3>
