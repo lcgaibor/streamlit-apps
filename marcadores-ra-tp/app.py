@@ -18,9 +18,9 @@ st.set_page_config(
 # Aplicar estilos personalizados
 # apply_styles()
 """
-    Aplica los estilos CSS personalizados a la aplicación Streamlit.
-    """
-    st.markdown("""
+Aplica los estilos CSS personalizados a la aplicación Streamlit.
+"""
+st.markdown("""
     <style>
         /* Estilos generales de la página */
         .main {
