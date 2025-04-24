@@ -181,8 +181,8 @@ class ElementARMarkerGenerator:
             text_y = y0 + (cell_size - font_size) / 2
             
             # Texto en negrita simulado
-            for offset_x in range(-1, 2):
-                for offset_y in range(-1, 2):
+            for offset_x in range(-1, 1):
+                for offset_y in range(-1, 1):
                     draw.text(
                         (text_x + offset_x, text_y + offset_y),
                         atomic_text,
