@@ -125,7 +125,9 @@ class ElementARMarkerGenerator:
         if show_symbol:
             try:
                 # Fuente para la letra
-                font_symbol = ImageFont.truetype("arial.ttf", 120)  
+                font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+                font_symbol = ImageFont.truetype(font_path, 120)
+                # font_symbol = ImageFont.truetype("arial.ttf", 120)  X
             except IOError:
                 font_symbol = ImageFont.load_default()
             
@@ -141,12 +143,17 @@ class ElementARMarkerGenerator:
                 fill='white', outline='black', width=3
             )
             
-            draw.text(
-                (symbol_pos_x - symbol_width/2, symbol_pos_y - 60),
-                symbol,
-                fill='black',
-                font=font_symbol
-            )
+            text_x = symbol_pos_x - symbol_width / 2
+            text_y = symbol_pos_y - 60
+            
+            for offset_x in range(-1, 2):
+                for offset_y in range(-1, 2):
+                    draw.text(
+                        (text_x + offset_x, text_y + offset_y),
+                        symbol,
+                        fill='black',
+                        font=font_symbol
+                    )
         
         
         if show_atomic_number:
