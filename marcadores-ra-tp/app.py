@@ -170,14 +170,9 @@ class ElementARMarkerGenerator:
             atomic_text = str(atomic_number)
             try:
                 # Ajustar el tamaño de la fuente según la longitud del número
-                if len(atomic_text) == 1:
-                    font_size = int(cell_size * 0.9)
-                elif len(atomic_text) == 2:
-                    font_size = int(cell_size * 0.8)
-                else:
-                    font_size = int(cell_size * 0.7)
-                
-                font_info = ImageFont.truetype("arial.ttf", font_size)
+                font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+                font_size = 30  # 
+                font_info = ImageFont.truetype(font_path, font_size)
             except IOError:
                 font_info = ImageFont.load_default()
             
