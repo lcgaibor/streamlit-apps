@@ -146,8 +146,8 @@ class ElementARMarkerGenerator:
             text_x = symbol_pos_x - symbol_width / 2
             text_y = symbol_pos_y - 60
             
-            for offset_x in range(-1, 2):
-                for offset_y in range(-1, 2):
+            for offset_x in range(-1, 1):
+                for offset_y in range(-1, 1):
                     draw.text(
                         (text_x + offset_x, text_y + offset_y),
                         symbol,
