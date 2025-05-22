@@ -1,0 +1,10 @@
+streamlit
+numpy
+opencv-python-headless
+Pillow
+
+
+#pip install streamlit
+#pip install numpy
+#pip install opencv-python-headless
+#pip install Pillow
