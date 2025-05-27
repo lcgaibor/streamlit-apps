@@ -71,9 +71,185 @@ class ElementARMarkerGenerator:
             ("Og", "Oganesón", 118)
         ]
     
+    def generate_hydrogen_qr_marker(self, show_symbol=False, show_atomic_number=True):
+        """
+        Genera un marcador especial tipo QR para el hidrógeno (elemento 1).
+        
+        Args:
+            show_symbol (bool): Indica si se debe mostrar el símbolo del elemento.
+            show_atomic_number (bool): Indica si se debe mostrar el número atómico.
+            
+        Returns:
+            np.array: Imagen del marcador como array de NumPy.
+        """
+        img_size = self.marker_size + 2 * self.border_size
+        img = Image.new('RGB', (img_size, img_size), color='white')
+        draw = ImageDraw.Draw(img)
+        
+        # Usar una semilla específica para el hidrógeno
+        np.random.seed(1001)  # Semilla especial para hidrógeno
+        
+        # Crear un patrón tipo QR más denso
+        grid_size = 16  # Más celdas para patrón más complejo
+        cell_size = self.marker_size // grid_size
+        
+        # Definir patrones especiales para las esquinas (como QR codes)
+        corner_pattern = [
+            [1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1]
+        ]
+        
+        # Dibujar patrones de esquina (como QR)
+        corner_positions = [(0, 0), (grid_size-7, 0), (0, grid_size-7)]
+        
+        for corner_x, corner_y in corner_positions:
+            for i in range(7):
+                for j in range(7):
+                    if corner_pattern[i][j] == 1:
+                        x0 = self.border_size + (corner_x + i) * cell_size
+                        y0 = self.border_size + (corner_y + j) * cell_size
+                        x1 = x0 + cell_size
+                        y1 = y0 + cell_size
+                        draw.rectangle([(x0, y0), (x1, y1)], fill='black')
+        
+        # Añadir patrón de alineación en el centro (específico del hidrógeno)
+        center_x, center_y = grid_size // 2 - 2, grid_size // 2 - 2
+        alignment_pattern = [
+            [1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 1],
+            [1, 0, 1, 0, 1],
+            [1, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1]
+        ]
+        
+        for i in range(5):
+            for j in range(5):
+                if alignment_pattern[i][j] == 1:
+                    x0 = self.border_size + (center_x + i) * cell_size
+                    y0 = self.border_size + (center_y + j) * cell_size
+                    x1 = x0 + cell_size
+                    y1 = y0 + cell_size
+                    draw.rectangle([(x0, y0), (x1, y1)], fill='black')
+        
+        # Rellenar el resto con patrón pseudo-aleatorio
+        for i in range(grid_size):
+            for j in range(grid_size):
+                # Evitar las esquinas y el centro ya dibujados
+                if ((i < 7 and j < 7) or  # Esquina superior izquierda
+                    (i >= grid_size-7 and j < 7) or  # Esquina superior derecha
+                    (i < 7 and j >= grid_size-7) or  # Esquina inferior izquierda
+                    (center_x <= i < center_x+5 and center_y <= j < center_y+5)):  # Centro
+                    continue
+                
+                # Reservar espacio para símbolo y número atómico si están habilitados
+                if show_symbol and i < 4 and j >= grid_size-4:
+                    continue
+                if show_atomic_number and i >= grid_size-3 and j >= grid_size-3:
+                    continue
+                
+                # Generar patrón determinista específico para hidrógeno
+                seed_val = (i * 31 + j * 17 + 1001) % 100
+                if seed_val < 45:  # 45% de probabilidad
+                    x0 = self.border_size + i * cell_size
+                    y0 = self.border_size + j * cell_size
+                    x1 = x0 + cell_size
+                    y1 = y0 + cell_size
+                    draw.rectangle([(x0, y0), (x1, y1)], fill='black')
+        
+        # Añadir el símbolo H si está habilitado
+        if show_symbol:
+            try:
+                font_path = "font/OpenSans-Bold.ttf"
+                font_size = 60
+                font_symbol = ImageFont.truetype(font_path, font_size)
+            except IOError:
+                try:
+                    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+                    font_symbol = ImageFont.truetype(font_path, font_size)
+                except IOError:
+                    font_symbol = ImageFont.load_default()
+            
+            # Área para el símbolo (4x4 celdas en la esquina inferior izquierda)
+            symbol_area_x0 = self.border_size
+            symbol_area_y0 = self.border_size + (grid_size - 4) * cell_size
+            symbol_area_x1 = symbol_area_x0 + cell_size * 4
+            symbol_area_y1 = symbol_area_y0 + cell_size * 4
+            
+            # Fondo blanco para el símbolo
+            draw.rectangle(
+                [(symbol_area_x0, symbol_area_y0), (symbol_area_x1, symbol_area_y1)],
+                fill='white'
+            )
+            
+            # Centrar el texto
+            symbol_width = draw.textlength("H", font=font_symbol)
+            text_x = symbol_area_x0 + (4*cell_size - symbol_width) / 2
+            text_y = symbol_area_y0 + (4*cell_size - font_size) / 2
+            
+            # Dibujar el símbolo H
+            for offset_x in range(-1, 1):
+                for offset_y in range(-1, 1):
+                    draw.text(
+                        (text_x + offset_x, text_y + offset_y),
+                        "H",
+                        fill='black',
+                        font=font_symbol
+                    )
+        
+        # Añadir el número atómico si está habilitado
+        if show_atomic_number:
+            try:
+                font_path = "font/OpenSans-Bold.ttf"
+                font_size = 50
+                font_info = ImageFont.truetype(font_path, font_size)
+            except IOError:
+                try:
+                    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+                    font_info = ImageFont.truetype(font_path, font_size)
+                except IOError:
+                    font_info = ImageFont.load_default()
+            
+            # Área para el número atómico (3x3 celdas en la esquina inferior derecha)
+            atomic_area_x0 = self.border_size + (grid_size - 3) * cell_size
+            atomic_area_y0 = self.border_size + (grid_size - 3) * cell_size
+            atomic_area_x1 = atomic_area_x0 + cell_size * 3
+            atomic_area_y1 = atomic_area_y0 + cell_size * 3
+            
+            # Fondo blanco para el número
+            draw.rectangle(
+                [(atomic_area_x0, atomic_area_y0), (atomic_area_x1, atomic_area_y1)],
+                fill='white'
+            )
+            
+            # Centrar el texto
+            text_width = draw.textlength("1", font=font_info)
+            text_x = atomic_area_x0 + (3*cell_size - text_width) / 2
+            text_y = atomic_area_y0 + (3*cell_size - font_size) / 2
+            
+            # Dibujar el número 1
+            for offset_x in range(-1, 1):
+                for offset_y in range(-1, 1):
+                    draw.text(
+                        (text_x + offset_x, text_y + offset_y),
+                        "1",
+                        fill='black',
+                        font=font_info
+                    )
+        
+        marker_array = np.array(img)
+        marker_gray = cv2.cvtColor(marker_array, cv2.COLOR_RGB2GRAY)
+        
+        return marker_gray
+    
     def generate_element_marker(self, symbol, name, atomic_number, show_symbol=False, show_atomic_number=True, symbol_size=2):
         """
         Genera un marcador RA único para un elemento químico optimizado para impresión 3D.
+        Si es hidrógeno (atomic_number = 1), genera un marcador especial tipo QR.
         
         Args:
             symbol (str): Símbolo del elemento.
@@ -86,11 +262,14 @@ class ElementARMarkerGenerator:
         Returns:
             np.array: Imagen del marcador como array de NumPy.
         """
+        # Caso especial para el hidrógeno
+        if atomic_number == 1:
+            return self.generate_hydrogen_qr_marker(show_symbol, show_atomic_number)
+        
+        # Código original para todos los demás elementos
         img_size = self.marker_size + 2 * self.border_size
         img = Image.new('RGB', (img_size, img_size), color='white')
         draw = ImageDraw.Draw(img)
-        
-        # Se ha eliminado el borde negro exterior del marcador
         
         np.random.seed(atomic_number)  # Usar número atómico como semilla
         
@@ -100,12 +279,10 @@ class ElementARMarkerGenerator:
         
         for i in range(grid_size):
             for j in range(grid_size):
-                # CAMBIO AQUÍ: Evitar dibujar en las áreas reservadas para el símbolo y número atómico
-                # Reservar symbol_size x symbol_size celdas en la esquina superior izquierda para el símbolo
+                # Evitar dibujar en las áreas reservadas para el símbolo y número atómico
                 if show_symbol and i < symbol_size and j < symbol_size:
                     continue
                     
-                # Reservar 2x2 celdas en la esquina inferior derecha para el número atómico
                 if show_atomic_number and i >= grid_size - 2 and j >= grid_size - 2:
                     continue
                 
@@ -117,51 +294,41 @@ class ElementARMarkerGenerator:
                     x1 = x0 + cell_size
                     y1 = y0 + cell_size
                     
-                    # Solo dibujar cuadrados (100%)
                     draw.rectangle([(x0, y0), (x1, y1)], fill='black')
         
         if show_symbol:
             try:
-                # Fuente para el símbolo - usar OpenSans-Bold.ttf
                 font_path = "font/OpenSans-Bold.ttf"
-                # CAMBIO AQUÍ: Ajustar tamaño de fuente según el tamaño del símbolo
                 if symbol_size == 2:
                     font_size = 80
                 elif symbol_size == 3:
-                    font_size = 110  # Más grande para área 3x3
+                    font_size = 110
                 else:  # symbol_size == 4
-                    font_size = 140  # Más grande para área 4x4
+                    font_size = 140
                     
                 font_symbol = ImageFont.truetype(font_path, font_size)
             except IOError:
                 try:
-                    # Intentar con la ruta alternativa si la primera falla
                     font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
                     font_symbol = ImageFont.truetype(font_path, font_size)
                 except IOError:
                     font_symbol = ImageFont.load_default()
             
-            # CAMBIO AQUÍ: Usar un área de symbol_size x symbol_size celdas para el símbolo en la esquina superior izquierda
             symbol_area_x0 = self.border_size
             symbol_area_y0 = self.border_size
             symbol_area_x1 = symbol_area_x0 + cell_size * symbol_size
             symbol_area_y1 = symbol_area_y0 + cell_size * symbol_size
             
-            # Dibujar un fondo blanco para el símbolo sin borde negro
             draw.rectangle(
                 [(symbol_area_x0, symbol_area_y0), (symbol_area_x1, symbol_area_y1)],
                 fill='white'
             )
             
-            # Calcular posición centrada para el texto
             symbol_width = draw.textlength(symbol, font=font_symbol)
             text_x = symbol_area_x0 + (symbol_size*cell_size - symbol_width) / 2
             text_y = symbol_area_y0 + (symbol_size*cell_size - font_size) / 2
             
-            # CAMBIO AQUÍ: Asegurar que el texto está completamente contenido dentro del área symbol_size x symbol_size
-            # Ajustar tamaño si es necesario
             if symbol_width > (symbol_size*cell_size - 10):
-                # Reducir el tamaño de la fuente si es necesario
                 scaling_factor = (symbol_size*cell_size - 10) / symbol_width
                 new_font_size = int(font_size * scaling_factor)
                 try:
@@ -169,12 +336,10 @@ class ElementARMarkerGenerator:
                 except IOError:
                     font_symbol = ImageFont.load_default()
                 
-                # Recalcular posición
                 symbol_width = draw.textlength(symbol, font=font_symbol)
                 text_x = symbol_area_x0 + (symbol_size*cell_size - symbol_width) / 2
                 text_y = symbol_area_y0 + (symbol_size*cell_size - new_font_size) / 2
             
-            # Texto en negrita simulado
             for offset_x in range(-1, 1):
                 for offset_y in range(-1, 1):
                     draw.text(
@@ -185,13 +350,11 @@ class ElementARMarkerGenerator:
                     )
         
         if show_atomic_number:
-            # Usar un área de 2x2 celdas para el número atómico en la esquina inferior derecha
             atomic_area_x0 = self.border_size + (grid_size - 2) * cell_size
             atomic_area_y0 = self.border_size + (grid_size - 2) * cell_size
             atomic_area_x1 = atomic_area_x0 + cell_size * 2
             atomic_area_y1 = atomic_area_y0 + cell_size * 2
             
-            # Dibujar un fondo blanco para el número atómico sin borde negro
             draw.rectangle(
                 [(atomic_area_x0, atomic_area_y0), (atomic_area_x1, atomic_area_y1)],
                 fill='white'
@@ -199,27 +362,21 @@ class ElementARMarkerGenerator:
             
             atomic_text = str(atomic_number)
             try:
-                # Ajustar el tamaño de la fuente según la longitud del número
                 font_path = "font/OpenSans-Bold.ttf"
-                font_size = 80 if len(atomic_text) <= 2 else 65  # Ajustado para que entre mejor
+                font_size = 80 if len(atomic_text) <= 2 else 65
                 font_info = ImageFont.truetype(font_path, font_size)
             except IOError:
                 try:
-                    # Intentar con la ruta alternativa si la primera falla
                     font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
                     font_info = ImageFont.truetype(font_path, font_size)
                 except IOError:
                     font_info = ImageFont.load_default()
             
-            # Calcular posición centrada para el texto
             text_width = draw.textlength(atomic_text, font=font_info)
             text_x = atomic_area_x0 + (2*cell_size - text_width) / 2
             text_y = atomic_area_y0 + (2*cell_size - font_size) / 2
             
-            # Asegurar que el número está completamente contenido dentro del área 2x2
-            # Ajustar tamaño si es necesario
             if text_width > (2*cell_size - 10):
-                # Reducir el tamaño de la fuente si es necesario
                 scaling_factor = (2*cell_size - 10) / text_width
                 new_font_size = int(font_size * scaling_factor)
                 try:
@@ -227,12 +384,10 @@ class ElementARMarkerGenerator:
                 except IOError:
                     font_info = ImageFont.load_default()
                 
-                # Recalcular posición
                 text_width = draw.textlength(atomic_text, font=font_info)
                 text_x = atomic_area_x0 + (2*cell_size - text_width) / 2
                 text_y = atomic_area_y0 + (2*cell_size - new_font_size) / 2
             
-            # Texto en negrita simulado
             for offset_x in range(-1, 1):
                 for offset_y in range(-1, 1):
                     draw.text(
@@ -270,6 +425,8 @@ def main():
     de la tabla periódica. Cada marcador se genera utilizando el número atómico del elemento 
     como semilla, lo que garantiza un patrón único y reconocible, optimizado para Vuforia y 
     para impresión 3D.
+    
+    El Hidrógeno (H-1) tiene un marcador único tipo QR diferente a todos los demás elementos.
     """)
 
     generator = ElementARMarkerGenerator()
@@ -306,7 +463,8 @@ def main():
         element = generator.get_element_by_atomic_number(atomic_num)
         if element:
             symbol, name, _ = element
-            element_options.append(f"{atomic_num}: {name} ({symbol})")
+            special_marker = "  [ESPECIAL]" if atomic_num == 1 else ""
+            element_options.append(f"{atomic_num}: {name} ({symbol}){special_marker}")
     
     selected_element_str = st.sidebar.selectbox(
         "Elemento",
@@ -326,13 +484,13 @@ def main():
     show_symbol = st.sidebar.checkbox("Mostrar símbolo del elemento", value=True)
     show_atomic_number = st.sidebar.checkbox("Mostrar número atómico", value=True)
     
-    # NUEVO: Selector de tamaño del símbolo
+    # Selector de tamaño del símbolo (solo para elementos que no sean hidrógeno)
     st.sidebar.subheader("Tamaño del Símbolo")
     symbol_size = st.sidebar.selectbox(
         "Tamaño del símbolo (en celdas)",
         options=[2, 3, 4],
         index=0,
-        help="Selecciona el tamaño del área para el símbolo: 2x2, 3x3, o 4x4 celdas"
+        help="Selecciona el tamaño del área para el símbolo: 2x2, 3x3, o 4x4 celdas (No aplica para Hidrógeno)"
     )
     
     # Botón para generar
@@ -356,7 +514,6 @@ def main():
         with col1:
             st.subheader("Marcador RA generado")
             
-            # CAMBIO AQUÍ: Pasar el parámetro symbol_size al método
             marker = generator.generate_element_marker(
                 symbol, 
                 name, 
@@ -368,35 +525,65 @@ def main():
             
             pil_img = Image.fromarray(marker)
             
-            st.image(pil_img, caption=f"Marcador RA para {name} (Símbolo {symbol_size}x{symbol_size})", use_container_width=True)
+            # Mensaje especial para hidrógeno
+            if atomic_number == 1:
+                caption_text = f" Marcador RA ESPECIAL tipo QR para {name} (H)"
+            else:
+                caption_text = f"Marcador RA para {name} (Símbolo {symbol_size}x{symbol_size})"
+            
+            st.image(pil_img, caption=caption_text, use_container_width=True)
             
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"{atomic_number:03d}_{symbol}_{symbol_size}x{symbol_size}_{timestamp}.png"
+            if atomic_number == 1:
+                filename = f"{atomic_number:03d}_{symbol}_QR_ESPECIAL_{timestamp}.png"
+            else:
+                filename = f"{atomic_number:03d}_{symbol}_{symbol_size}x{symbol_size}_{timestamp}.png"
             st.markdown(get_image_download_link(pil_img, filename, "📥 Descargar Marcador"), unsafe_allow_html=True)
         
         with col2:
             st.subheader("Información del Elemento")
             
-            st.markdown(f"""
-            <div class="element-info">
-                <h3 style="text-align: center; color: black;">{symbol}</h3>
-                <h2 style="text-align: center; color: black;">{name}</h2>
-                <p style="text-align: center; color: black;"><strong>Número atómico:</strong> {atomic_number}</p>
-                <p style="text-align: center; color: black;"><strong>Tamaño símbolo:</strong> {symbol_size}x{symbol_size}</p>
-            </div>
-            """, unsafe_allow_html=True)
+            # Información especial para hidrógeno
+            if atomic_number == 1:
+                st.markdown(f"""
+                <div class="element-info">
+                    <h3 style="text-align: center; color: red;"> {symbol} - ESPECIAL</h3>
+                    <h2 style="text-align: center; color: black;">{name}</h2>
+                    <p style="text-align: center; color: black;"><strong>Número atómico:</strong> {atomic_number}</p>
+                    <p style="text-align: center; color: red;"><strong>Tipo:</strong> Marcador QR único</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="element-info">
+                    <h3 style="text-align: center; color: black;">{symbol}</h3>
+                    <h2 style="text-align: center; color: black;">{name}</h2>
+                    <p style="text-align: center; color: black;"><strong>Número atómico:</strong> {atomic_number}</p>
+                    <p style="text-align: center; color: black;"><strong>Tamaño símbolo:</strong> {symbol_size}x{symbol_size}</p>
+                </div>
+                """, unsafe_allow_html=True)
             
-            
-            st.markdown("""
-            ### Características del marcador
-            
-            * Se utiliza el algoritmo Mersenne Twister.
-            * Patrón de cuadrados para una detección más efectiva
-            * Este método garantiza que se generará exactamente el mismo patrón.
-            * El algoritmo aplica transformaciones matemáticas, desplazamientos de bits y XOR.
-            * Patrón único generado usando el número atómico
-            * Tamaño de símbolo configurable (2x2, 3x3, 4x4)
-            """)
+            # Características específicas según el elemento
+            if atomic_number == 1:
+                st.markdown("""
+                ### Características del marcador ESPECIAL (Hidrógeno)
+                
+                *  **Marcador único tipo QR** solo para hidrógeno
+                * **Patrones de esquina** similares a códigos QR
+                * **Patrón de alineación central** para mejor detección
+                * **Grid de 16x16** para mayor densidad
+                """)
+            else:
+                st.markdown("""
+                ### Características del marcador
+                
+                * Se utiliza el algoritmo Mersenne Twister.
+                * Patrón de cuadrados para una detección más efectiva
+                * Este método garantiza que se generará exactamente el mismo patrón.
+                * El algoritmo aplica transformaciones matemáticas, desplazamientos de bits y XOR.
+                * Patrón único generado usando el número atómico
+                * Tamaño de símbolo configurable (2x2, 3x3, 4x4)
+                """)
         
         # Instrucciones de uso
         st.markdown("""
@@ -406,8 +593,19 @@ def main():
         2. Para uso en AR (Vuforia): Imprime la imagen en papel o muéstrala en pantalla
         3. Para impresión 3D: Importa el archivo a TinkerCAD para añadir relieve
         4. En la impresión 3D, las áreas negras serán las que tengan relieve
-        5. Puedes ajustar el tamaño del símbolo según tus necesidades (2x2, 3x3, o 4x4)
+        5. **¡ESPECIAL!** El Hidrógeno tiene un marcador tipo QR único para fácil identificación
         """)
+        
+        if atomic_number == 1:
+            st.markdown("""
+            ### 🔥 Información adicional sobre el marcador del Hidrógeno
+        
+            
+            - **Patrones de esquina QR**: Tres patrones de 7x7 en las esquinas para orientación
+            - **Patrón central**: Un patrón de alineación de 5x5 en el centro
+            - **Mayor densidad**: Grid de 16x16 vs 8x8 de los demás elementos
+            - **Reconocimiento único**: Fácilmente distinguible de cualquier otro marcador
+            """)
     
     # Pie de página
     st.sidebar.markdown("---")
