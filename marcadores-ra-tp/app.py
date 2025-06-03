@@ -758,7 +758,7 @@ def main():
         
         if marker_type == "Marcador QR (Optimizado AR)":
             st.markdown(f"""
-            ### 🔷 Detalles técnicos del marcador QR optimizado AR - {name}
+            ### Detalles técnicos del marcador QR - {name}
             
             **Algoritmo de generación multi-semilla para máxima diferenciación:**
             
