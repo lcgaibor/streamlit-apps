@@ -12,6 +12,12 @@ Una aplicación que genera marcadores de Realidad Aumentada (RA) únicos para ca
 Un dashboard interactivo para visualizar y analizar riesgos en diferentes activos de la empresa POWERNET SD
 - [Ver código](grafico-salvaguardas/)
 
+### 3. Generador de Símbolos de Elementos Químicos
+Aplicación web minimalista que genera imágenes PNG de símbolos de elementos químicos con diseño limpio y profesional.
+- [Ver código](./generador-simbolos-quimicos/)
+
 ## Cómo ejecutar las aplicaciones
 
 Cada aplicación tiene su propio directorio con instrucciones y dependencias específicas en su README.md.
+
+
