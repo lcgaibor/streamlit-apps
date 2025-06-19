@@ -149,8 +149,8 @@ def crear_imagen_elemento(simbolo, numero_atomico=None, mostrar_numero=False):
     # Dimensiones de la imagen
     ancho, alto = 400, 400
     
-    # Crear imagen con fondo blanco
-    imagen = Image.new('RGB', (ancho, alto), 'white')
+    # Crear imagen con fondo transparente
+    imagen = Image.new('RGBA', (ancho, alto), (255, 255, 255, 0))  # Fondo transparente
     draw = ImageDraw.Draw(imagen)
     
     # Intentar cargar fuentes con diferentes tamaños según la longitud del símbolo
@@ -368,7 +368,7 @@ def main():
     st.markdown(
         """
         <div style='text-align: center; color: #666;'>
-        <small>Generador de Símbolos Químicos </small>
+        <small>Generador de Símbolos Químicos | Hecho con ❤️ usando Streamlit</small>
         </div>
         """,
         unsafe_allow_html=True
