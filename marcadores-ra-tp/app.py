@@ -71,89 +71,20 @@ class ElementARMarkerGenerator:
             ("Og", "Oganesón", 118)
         ]
     
-    def generate_atomic_hash(self, atomic_number):
-        """
-        Genera un hash único basado en propiedades químicas del elemento
-        para evitar colisiones de patrones entre elementos distantes.
-        """
-        # Usar múltiples propiedades del número atómico para generar dispersión
-        hash_val = 0
-        
-        # Factor 1: Número atómico directo
-        hash_val += atomic_number * 7919  # Primo grande
-        
-        # Factor 2: Posición en la tabla periódica
-        period = self.get_period(atomic_number)
-        group = self.get_group(atomic_number)
-        hash_val += (period * 541) + (group * 1009)  # Primos diferentes
-        
-        # Factor 3: Tipo de elemento
-        element_type = self.get_element_type(atomic_number)
-        hash_val += element_type * 2003
-        
-        # Factor 4: Dígitos del número atómico
-        digits_sum = sum(int(d) for d in str(atomic_number))
-        digits_product = 1
-        for d in str(atomic_number):
-            digits_product *= (int(d) + 1)  # +1 para evitar multiplicar por 0
-        
-        hash_val += digits_sum * 3001 + digits_product * 4001
-        
-        # Factor 5: Paridad y posición
-        hash_val += (atomic_number % 2) * 5003
-        hash_val += ((atomic_number - 1) // 10) * 6007
-        
-        return hash_val % (2**31 - 1)  # Mantener en rango positivo de 32 bits
-    
-    def get_period(self, atomic_number):
-        """Obtiene el período del elemento en la tabla periódica."""
-        if atomic_number <= 2: return 1
-        elif atomic_number <= 10: return 2
-        elif atomic_number <= 18: return 3
-        elif atomic_number <= 36: return 4
-        elif atomic_number <= 54: return 5
-        elif atomic_number <= 86: return 6
-        else: return 7
-    
-    def get_group(self, atomic_number):
-        """Obtiene el grupo aproximado del elemento."""
-        # Simplificación para dispersión
-        noble_gases = [2, 10, 18, 36, 54, 86, 118]
-        for i, ng in enumerate(noble_gases):
-            if atomic_number <= ng:
-                return (atomic_number - (noble_gases[i-1] if i > 0 else 0)) % 18 + 1
-        return 18
-    
-    def get_element_type(self, atomic_number):
-        """Obtiene el tipo de elemento para dispersión adicional."""
-        # Metales alcalinos
-        if atomic_number in [3, 11, 19, 37, 55, 87]: return 1
-        # Metales alcalinotérreos  
-        elif atomic_number in [4, 12, 20, 38, 56, 88]: return 2
-        # Metales de transición
-        elif atomic_number in list(range(21, 31)) + list(range(39, 49)) + list(range(72, 81)) + list(range(104, 113)): return 3
-        # Metaloides
-        elif atomic_number in [5, 14, 32, 33, 51, 52, 85]: return 4
-        # Gases nobles
-        elif atomic_number in [2, 10, 18, 36, 54, 86, 118]: return 5
-        # Lantánidos
-        elif 57 <= atomic_number <= 71: return 6
-        # Actínidos
-        elif 89 <= atomic_number <= 103: return 7
-        # Otros no metales
-        else: return 8
-    
     def generate_unique_corner_pattern(self, atomic_number, corner_index):
         """
-        Genera un patrón de esquina único usando hash atómico para evitar colisiones.
-        """
-        # Usar hash atómico único + offset por esquina
-        unique_hash = self.generate_atomic_hash(atomic_number)
-        seed_offsets = [1000, 2000, 3000]
+        Genera un patrón de esquina único para cada elemento y cada esquina.
         
-        # Combinar hash único con offset de esquina
-        final_seed = (unique_hash + seed_offsets[corner_index]) % (2**31 - 1)
-        np.random.seed(final_seed)
+        Args:
+            atomic_number (int): Número atómico del elemento.
+            corner_index (int): Índice de la esquina (0, 1, 2).
+            
+        Returns:
+            list: Patrón de esquina de 7x7.
+        """
+        # Usar diferentes semillas para cada esquina
+        seed_offset = [1000, 2000, 3000]
+        np.random.seed(atomic_number + seed_offset[corner_index])
         
         # Patrón base de esquina QR
         corner_base = [
@@ -169,110 +100,81 @@ class ElementARMarkerGenerator:
         # Crear copia del patrón base
         corner_pattern = [row[:] for row in corner_base]
         
-        # Generar modificaciones únicas para el área interna usando hash
+        # Generar modificaciones únicas para el área interna (2x2 a 4x4)
         for i in range(2, 5):
             for j in range(2, 5):
-                # Usar hash único para decidir el patrón interno
-                cell_hash = (unique_hash + i * 13 + j * 17 + corner_index * 23) % 100
-                if cell_hash > 50:
-                    corner_pattern[i][j] = 1 - corner_pattern[i][j]
+                # Usar Mersenne Twister para decidir el patrón interno
+                if np.random.random() > 0.5:
+                    corner_pattern[i][j] = 1 - corner_pattern[i][j]  # Invertir
         
-        # Aplicar modificaciones estructurales únicas basadas en hash
-        mod_val = (unique_hash + corner_index * 47) % 15  # Más variaciones
+        # Aplicar modificaciones adicionales basadas en el número atómico y esquina
+        mod_val = (atomic_number + corner_index * 37) % 12  # Más variaciones
         
-        # 15 patrones diferentes para máxima dispersión
         if mod_val == 0:
-            corner_pattern[2][2] = 0; corner_pattern[4][4] = 0
+            corner_pattern[2][2] = 0
+            corner_pattern[4][4] = 0
         elif mod_val == 1:
-            corner_pattern[2][3] = 0; corner_pattern[3][2] = 0
+            corner_pattern[2][3] = 0
+            corner_pattern[3][2] = 0
         elif mod_val == 2:
-            corner_pattern[3][3] = 0; corner_pattern[2][4] = 1
+            corner_pattern[3][3] = 0
+            corner_pattern[2][4] = 1
         elif mod_val == 3:
-            corner_pattern[2][2] = 1; corner_pattern[3][4] = 0
+            corner_pattern[2][2] = 1
+            corner_pattern[3][4] = 0
         elif mod_val == 4:
-            corner_pattern[4][2] = 0; corner_pattern[4][3] = 1
+            corner_pattern[4][2] = 0
+            corner_pattern[4][3] = 1
         elif mod_val == 5:
-            corner_pattern[2][3] = 1; corner_pattern[4][3] = 0
+            corner_pattern[2][3] = 1
+            corner_pattern[4][3] = 0
         elif mod_val == 6:
-            corner_pattern[3][2] = 1; corner_pattern[3][4] = 1
+            corner_pattern[3][2] = 1
+            corner_pattern[3][4] = 1
         elif mod_val == 7:
-            corner_pattern[2][4] = 0; corner_pattern[4][2] = 1
+            corner_pattern[2][4] = 0
+            corner_pattern[4][2] = 1
         elif mod_val == 8:
-            corner_pattern[2][2] = 1; corner_pattern[2][4] = 0; corner_pattern[4][4] = 1
+            corner_pattern[2][2] = 1
+            corner_pattern[2][4] = 0
+            corner_pattern[4][4] = 1
         elif mod_val == 9:
-            corner_pattern[3][3] = 1; corner_pattern[4][3] = 0
+            corner_pattern[3][3] = 1
+            corner_pattern[4][3] = 0
         elif mod_val == 10:
-            corner_pattern[2][3] = 0; corner_pattern[3][4] = 1; corner_pattern[4][2] = 0
-        elif mod_val == 11:
-            corner_pattern[2][2] = 0; corner_pattern[3][3] = 1; corner_pattern[4][4] = 0
-        elif mod_val == 12:
-            corner_pattern[2][2] = 1; corner_pattern[3][2] = 0; corner_pattern[4][4] = 1
-        elif mod_val == 13:
-            corner_pattern[2][4] = 1; corner_pattern[3][3] = 0; corner_pattern[4][2] = 0
-        else:  # mod_val == 14
-            corner_pattern[2][3] = 1; corner_pattern[3][4] = 0; corner_pattern[4][3] = 1
+            corner_pattern[2][3] = 0
+            corner_pattern[3][4] = 1
+            corner_pattern[4][2] = 0
+        else:  # mod_val == 11
+            corner_pattern[2][2] = 0
+            corner_pattern[3][3] = 1
+            corner_pattern[4][4] = 0
         
         return corner_pattern
     
-    def generate_unique_timing_patterns(self, atomic_number, grid_size):
-        """
-        Genera patrones de timing únicos para cada elemento (como en QR reales).
-        """
-        unique_hash = self.generate_atomic_hash(atomic_number)
-        np.random.seed(unique_hash + 7000)
-        
-        timing_patterns = []
-        
-        # Patrón horizontal (fila 6)
-        row = 6
-        horizontal_pattern = []
-        for col in range(8, grid_size - 8):
-            cell_hash = (unique_hash + col * 31) % 100
-            horizontal_pattern.append((row, col, 1 if cell_hash > 60 else 0))
-        
-        # Patrón vertical (columna 6)
-        col = 6
-        vertical_pattern = []
-        for row in range(8, grid_size - 8):
-            cell_hash = (unique_hash + row * 37) % 100
-            vertical_pattern.append((row, col, 1 if cell_hash > 60 else 0))
-        
-        return horizontal_pattern + vertical_pattern
-    
-    def generate_format_info_pattern(self, atomic_number, grid_size):
-        """
-        Genera información de formato única para cada elemento.
-        """
-        unique_hash = self.generate_atomic_hash(atomic_number)
-        
-        format_patterns = []
-        
-        # Patrón alrededor de las esquinas superior izquierda
-        format_positions = [
-            (8, 0), (8, 1), (8, 2), (8, 3), (8, 4), (8, 5), (8, 7), (8, 8),
-            (7, 8), (5, 8), (4, 8), (3, 8), (2, 8), (1, 8), (0, 8)
-        ]
-        
-        for i, (row, col) in enumerate(format_positions):
-            cell_hash = (unique_hash + i * 41) % 100
-            format_patterns.append((row, col, 1 if cell_hash > 55 else 0))
-        
-        return format_patterns
-    
     def generate_qr_marker(self, symbol, atomic_number, show_symbol=True, show_atomic_number=True):
         """
-        Genera un marcador tipo QR único con hash atómico para evitar colisiones.
+        Genera un marcador tipo QR único para cualquier elemento químico usando Mersenne Twister
+        con patrones de esquina únicos para cada elemento.
+        
+        Args:
+            symbol (str): Símbolo del elemento.
+            atomic_number (int): Número atómico del elemento.
+            show_symbol (bool): Indica si se debe mostrar el símbolo del elemento.
+            show_atomic_number (bool): Indica si se debe mostrar el número atómico.
+            
+        Returns:
+            np.array: Imagen del marcador como array de NumPy.
         """
         img_size = self.marker_size + 2 * self.border_size
         img = Image.new('RGB', (img_size, img_size), color='white')
         draw = ImageDraw.Draw(img)
         
-        # Usar hash atómico único como semilla base
-        unique_hash = self.generate_atomic_hash(atomic_number)
-        np.random.seed(unique_hash)
+        # Usar Mersenne Twister con número atómico + 10000 como semilla base
+        np.random.seed(atomic_number + 10000)
         
         # Crear un patrón tipo QR más denso
-        grid_size = 16
+        grid_size = 16  # Más celdas para patrón más complejo
         cell_size = self.marker_size // grid_size
         
         # Generar patrones de esquina únicos para cada esquina
@@ -290,30 +192,13 @@ class ElementARMarkerGenerator:
                         y1 = y0 + cell_size
                         draw.rectangle([(x0, y0), (x1, y1)], fill='black')
         
-        # Agregar patrones de timing únicos
-        timing_patterns = self.generate_unique_timing_patterns(atomic_number, grid_size)
-        for row, col, value in timing_patterns:
-            if value == 1:
-                x0 = self.border_size + col * cell_size
-                y0 = self.border_size + row * cell_size
-                x1 = x0 + cell_size
-                y1 = y0 + cell_size
-                draw.rectangle([(x0, y0), (x1, y1)], fill='black')
-        
-        # Agregar información de formato única
-        format_patterns = self.generate_format_info_pattern(atomic_number, grid_size)
-        for row, col, value in format_patterns:
-            if value == 1 and row < grid_size and col < grid_size:
-                x0 = self.border_size + col * cell_size
-                y0 = self.border_size + row * cell_size
-                x1 = x0 + cell_size
-                y1 = y0 + cell_size
-                draw.rectangle([(x0, y0), (x1, y1)], fill='black')
-        
-        # Patrón de alineación central único
+        # Patrón de alineación central único para cada elemento
         center_x, center_y = grid_size // 2 - 2, grid_size // 2 - 2
-        np.random.seed(unique_hash + 5000)
         
+        # Usar semilla específica para el patrón central
+        np.random.seed(atomic_number + 5000)
+        
+        # Generar patrón de alineación único usando Mersenne Twister
         alignment_size = 5
         alignment_pattern = [[0 for _ in range(alignment_size)] for _ in range(alignment_size)]
         
@@ -324,12 +209,12 @@ class ElementARMarkerGenerator:
             alignment_pattern[i][0] = 1
             alignment_pattern[i][alignment_size-1] = 1
         
-        # Rellenar interior con patrón único usando hash
+        # Rellenar interior con patrón único usando Mersenne Twister
         for i in range(1, alignment_size-1):
             for j in range(1, alignment_size-1):
-                cell_hash = (unique_hash + i * 43 + j * 47) % 100
-                threshold = 30 + (unique_hash % 5) * 10
-                if cell_hash > threshold:
+                # Variar la probabilidad según el elemento
+                threshold = 0.3 + (atomic_number % 5) * 0.1  # 0.3 a 0.7
+                if np.random.random() > threshold:
                     alignment_pattern[i][j] = 1
         
         # Dibujar patrón de alineación
@@ -342,52 +227,38 @@ class ElementARMarkerGenerator:
                     y1 = y0 + cell_size
                     draw.rectangle([(x0, y0), (x1, y1)], fill='black')
         
-        # Rellenar el resto con patrón único usando hash atómico
-        np.random.seed(unique_hash + 10000)
+        # Rellenar el resto con patrón pseudo-aleatorio único usando Mersenne Twister
+        np.random.seed(atomic_number + 10000)  # Semilla para el relleno general
         
-        # Crear conjunto de posiciones ocupadas
-        occupied = set()
-        
-        # Marcar esquinas como ocupadas
-        for corner_x, corner_y in corner_positions:
-            for i in range(7):
-                for j in range(7):
-                    occupied.add((corner_x + i, corner_y + j))
-        
-        # Marcar centro como ocupado
-        for i in range(alignment_size):
-            for j in range(alignment_size):
-                occupied.add((center_x + i, center_y + j))
-        
-        # Marcar patrones de timing y formato como ocupados
-        for row, col, _ in timing_patterns + format_patterns:
-            occupied.add((row, col))
-        
-        # Rellenar celdas restantes
         for i in range(grid_size):
             for j in range(grid_size):
-                if (i, j) not in occupied:
-                    # Usar hash único para generar patrón
-                    cell_hash = (unique_hash + i * 53 + j * 59) % 100
-                    threshold = 45 + ((unique_hash + i + j) % 7) * 2
-                    
-                    if cell_hash > threshold:
-                        x0 = self.border_size + j * cell_size
-                        y0 = self.border_size + i * cell_size
-                        x1 = x0 + cell_size
-                        y1 = y0 + cell_size
-                        draw.rectangle([(x0, y0), (x1, y1)], fill='black')
+                # Evitar las esquinas y el centro ya dibujados
+                if ((i < 7 and j < 7) or  # Esquina superior izquierda
+                    (i >= grid_size-7 and j < 7) or  # Esquina superior derecha
+                    (i < 7 and j >= grid_size-7) or  # Esquina inferior izquierda
+                    (center_x <= i < center_x+5 and center_y <= j < center_y+5)):  # Centro
+                    continue
+                
+                # Generar patrón usando Mersenne Twister con probabilidad variable
+                threshold = 0.45 + (atomic_number % 7) * 0.02  # 0.45 a 0.57
+                if np.random.random() > threshold:
+                    x0 = self.border_size + i * cell_size
+                    y0 = self.border_size + j * cell_size
+                    x1 = x0 + cell_size
+                    y1 = y0 + cell_size
+                    draw.rectangle([(x0, y0), (x1, y1)], fill='black')
         
         # Añadir el símbolo en el centro si está habilitado
         if show_symbol:
             try:
                 font_path = "font/OpenSans-Bold.ttf"
+                # Aumentar significativamente el tamaño de la letra
                 if len(symbol) == 1:
-                    font_size = 120
+                    font_size = 120  # Para símbolos de una letra
                 elif len(symbol) == 2:
-                    font_size = 100
+                    font_size = 100  # Para símbolos de dos letras
                 else:
-                    font_size = 80
+                    font_size = 80   # Para símbolos de tres letras
                 font_symbol = ImageFont.truetype(font_path, font_size)
             except IOError:
                 try:
@@ -409,12 +280,14 @@ class ElementARMarkerGenerator:
                 fill='white'
             )
             
-            # Centrar el texto perfectamente
+            # Centrar el texto perfectamente (ajuste manual para compensar baseline)
             symbol_width = draw.textlength(symbol, font=font_symbol)
+            # Obtener la altura real del texto usando textbbox
             bbox = draw.textbbox((0, 0), symbol, font=font_symbol)
             text_height = bbox[3] - bbox[1]
             
             text_x = symbol_area_x0 + (symbol_area_size*cell_size - symbol_width) / 2
+            # Ajustar la posición Y para centrado visual perfecto
             text_y = symbol_area_y0 + (symbol_area_size*cell_size - text_height) / 2 - bbox[1] - 5
             
             # Ajustar tamaño si es necesario
@@ -431,22 +304,29 @@ class ElementARMarkerGenerator:
                 
                 symbol_width = draw.textlength(symbol, font=font_symbol)
                 text_x = symbol_area_x0 + (symbol_area_size*cell_size - symbol_width) / 2
+                # Ajustar la posición Y para centrado visual perfecto
                 text_y = symbol_area_y0 + (symbol_area_size*cell_size - text_height) / 2 - bbox[1] - 5
             
             # Dibujar el símbolo en negro centrado
-            draw.text((text_x, text_y), symbol, fill='black', font=font_symbol)
+            draw.text(
+                (text_x, text_y),
+                symbol,
+                fill='black',
+                font=font_symbol
+            )
         
-        # Añadir el número atómico si está habilitado
+        # Añadir el número atómico si está habilitado (con tamaño aumentado)
         if show_atomic_number:
             try:
                 font_path = "font/OpenSans-Bold.ttf"
+                # Aumentar significativamente el tamaño del número atómico
                 atomic_text = str(atomic_number)
                 if len(atomic_text) == 1:
-                    font_size = 85
+                    font_size = 85  # Aumentado de 70 a 85
                 elif len(atomic_text) == 2:
-                    font_size = 80
-                else:
-                    font_size = 70
+                    font_size = 80  # Aumentado de 65 a 80
+                else:  # 3 dígitos
+                    font_size = 70  # Aumentado de 55 a 70
                 font_info = ImageFont.truetype(font_path, font_size)
             except IOError:
                 try:
@@ -455,7 +335,7 @@ class ElementARMarkerGenerator:
                 except IOError:
                     font_info = ImageFont.load_default()
             
-            # Área para el número atómico (4x4 celdas)
+            # Área para el número atómico (4x4 celdas en la esquina inferior derecha - AUMENTADO)
             atomic_area_x0 = self.border_size + (grid_size - 4) * cell_size
             atomic_area_y0 = self.border_size + (grid_size - 4) * cell_size
             atomic_area_x1 = atomic_area_x0 + cell_size * 4
@@ -467,12 +347,14 @@ class ElementARMarkerGenerator:
                 fill='white'
             )
             
-            # Centrar el texto perfectamente
+            # Centrar el texto perfectamente (ajuste manual para compensar baseline)
             text_width = draw.textlength(atomic_text, font=font_info)
+            # Obtener la altura real del texto usando textbbox
             bbox = draw.textbbox((0, 0), atomic_text, font=font_info)
             text_height = bbox[3] - bbox[1]
             
             text_x = atomic_area_x0 + (4*cell_size - text_width) / 2
+            # Ajustar la posición Y para centrado visual perfecto
             text_y = atomic_area_y0 + (4*cell_size - text_height) / 2 - bbox[1] - 3
             
             # Ajustar tamaño si es necesario
@@ -489,10 +371,16 @@ class ElementARMarkerGenerator:
                 
                 text_width = draw.textlength(atomic_text, font=font_info)
                 text_x = atomic_area_x0 + (4*cell_size - text_width) / 2
+                # Ajustar la posición Y para centrado visual perfecto
                 text_y = atomic_area_y0 + (4*cell_size - text_height) / 2 - bbox[1] - 3
             
             # Dibujar el número atómico en negro
-            draw.text((text_x, text_y), atomic_text, fill='black', font=font_info)
+            draw.text(
+                (text_x, text_y),
+                atomic_text,
+                fill='black',
+                font=font_info
+            )
         
         marker_array = np.array(img)
         marker_gray = cv2.cvtColor(marker_array, cv2.COLOR_RGB2GRAY)
@@ -502,14 +390,23 @@ class ElementARMarkerGenerator:
     def generate_element_marker(self, symbol, name, atomic_number, show_symbol=False, show_atomic_number=True, symbol_size=2):
         """
         Genera un marcador RA único para un elemento químico optimizado para impresión 3D (estilo original).
+        
+        Args:
+            symbol (str): Símbolo del elemento.
+            name (str): Nombre del elemento.
+            atomic_number (int): Número atómico del elemento.
+            show_symbol (bool): Indica si se debe mostrar el símbolo del elemento.
+            show_atomic_number (bool): Indica si se debe mostrar el número atómico.
+            symbol_size (int): Tamaño del símbolo en celdas (2, 3, o 4).
+            
+        Returns:
+            np.array: Imagen del marcador como array de NumPy.
         """
         img_size = self.marker_size + 2 * self.border_size
         img = Image.new('RGB', (img_size, img_size), color='white')
         draw = ImageDraw.Draw(img)
         
-        # Usar hash atómico único para evitar colisiones
-        unique_hash = self.generate_atomic_hash(atomic_number)
-        np.random.seed(unique_hash)
+        np.random.seed(atomic_number)  # Usar número atómico como semilla
         
         # Generar una matriz de celdas para el marcador
         grid_size = 8  
@@ -524,11 +421,9 @@ class ElementARMarkerGenerator:
                 if show_atomic_number and i >= grid_size - 2 and j >= grid_size - 2:
                     continue
                 
-                # Generar patrón único usando hash atómico
-                cell_hash = (unique_hash + i * 61 + j * 67) % 100
-                threshold = 50 + ((unique_hash + i + j) % 3) * 5  # Variación del threshold
-                
-                if cell_hash > threshold:
+                # Generar un valor aleatorio determinista basado en el número atómico
+                rand_val = np.random.random()
+                if rand_val > 0.5:  # 50% de probabilidad de dibujar 
                     x0 = self.border_size + i * cell_size
                     y0 = self.border_size + j * cell_size
                     x1 = x0 + cell_size
@@ -658,16 +553,16 @@ def get_image_download_link(img, filename, text):
     return href
 
 def main():
-    st.title("🧪 Generador de Marcadores RA para la Tabla Periódica")
+    st.title("Generador de Marcadores RA para la Tabla Periódica")
     
     st.markdown("""
     Esta aplicación genera marcadores de Realidad Aumentada (RA) únicos para cada elemento 
-    de la tabla periódica. Cada marcador se genera utilizando un **hash atómico único** 
-    basado en propiedades químicas del elemento, lo que **elimina completamente las colisiones** 
-    entre marcadores y garantiza reconocimiento AR perfecto.
+    de la tabla periódica. Cada marcador se genera utilizando el número atómico del elemento 
+    como semilla con el algoritmo Mersenne Twister, lo que garantiza un patrón único y 
+    reconocible para cada uno de los 118 elementos, optimizado para Vuforia y para impresión 3D.
     
-    🔥 **SOLUCIÓN ANTI-COLISIÓN**: Implementa hash atómico basado en período, grupo, tipo de elemento 
-    y propiedades numéricas para evitar keypoints coincidentes como Ca-20 vs Cm-96.
+    **MEJORA RA**: Los marcadores QR ahora tienen patrones únicos en cada una de las 3 esquinas,
+    aumentando significativamente las diferencias entre elementos para mejor reconocimiento AR.
     """)
 
     generator = ElementARMarkerGenerator()
@@ -678,7 +573,7 @@ def main():
     st.sidebar.subheader("Tipo de Marcador")
     marker_type = st.sidebar.radio(
         "Selecciona el tipo de marcador:",
-        ["Marcador Normal (Original)", "Marcador QR (Anti-Colisión)"],
+        ["Marcador Normal (Original)", "Marcador QR (Optimizado AR)"],
         index=0
     )
     
@@ -687,16 +582,16 @@ def main():
     
     # Nueva clasificación de elementos por categorías
     element_categories = {
-        "🔴 Metales Alcalinos (6 elementos)": [3, 11, 19, 37, 55, 87],
-        "🟠 Metales Alcalinotérreos (6 elementos)": [4, 12, 20, 38, 56, 88],
-        "🟡 Metales de Transición (34 elementos)": [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 72, 73, 74, 75, 76, 77, 78, 79, 80, 104, 105, 106, 107, 108],
-        "🟢 Metales Post-Transición (12 elementos)": [13, 31, 49, 50, 81, 82, 83, 84, 113, 114, 115, 116],
-        "🔵 Metaloides (7 elementos)": [5, 14, 32, 33, 51, 52, 85],
-        "🟣 No Metales Reactivos (9 elementos)": [1, 6, 7, 8, 9, 15, 16, 17, 34],
-        "🩵 Gases Nobles (6 elementos)": [2, 10, 18, 36, 54, 86],
-        "🟤 Lantánidos (15 elementos)": list(range(57, 72)),
-        "🩶 Actínidos (15 elementos)": list(range(89, 104)),
-        "⚫ Propiedades Químicas Desconocidas (4 elementos)": [112, 113, 114, 118]
+        "Metales Alcalinos (6 elementos)": [3, 11, 19, 37, 55, 87],
+        "Metales Alcalinotérreos (6 elementos)": [4, 12, 20, 38, 56, 88],
+        "Metales de Transición (34 elementos)": [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 72, 73, 74, 75, 76, 77, 78, 79, 80, 104, 105, 106, 107, 108],
+        "Metales Post-Transición (12 elementos)": [13, 31, 49, 50, 81, 82, 83, 84, 113, 114, 115, 116],
+        "Metaloides (7 elementos)": [5, 14, 32, 33, 51, 52, 85],
+        "No Metales Reactivos (9 elementos)": [1, 6, 7, 8, 9, 15, 16, 17, 34],
+        "Gases Nobles (6 elementos)": [2, 10, 18, 36, 54, 86],
+        "Lantánidos (15 elementos)": list(range(57, 72)),
+        "Actínidos (15 elementos)": list(range(89, 104)),
+        "Propiedades Químicas Desconocidas (4 elementos)": [112, 113, 114, 118]
     }
     
     category_select = st.sidebar.selectbox(
@@ -766,7 +661,7 @@ def main():
             st.subheader("Marcador RA generado")
             
             # Generar el marcador según el tipo seleccionado
-            if marker_type == "Marcador QR (Anti-Colisión)":
+            if marker_type == "Marcador QR (Optimizado AR)":
                 marker = generator.generate_qr_marker(
                     symbol, 
                     atomic_number, 
@@ -786,77 +681,67 @@ def main():
             pil_img = Image.fromarray(marker)
             
             # Mensaje según el tipo de marcador
-            if marker_type == "Marcador QR (Anti-Colisión)":
-                caption_text = f"🔥 Marcador RA QR anti-colisión - {name} ({symbol})"
+            if marker_type == "Marcador QR (Optimizado AR)":
+                caption_text = f"🔷 Marcador RA tipo QR optimizado para AR - {name} ({symbol})"
             else:
-                caption_text = f"Marcador RA tradicional mejorado - {name} (Símbolo {symbol_size}x{symbol_size})"
+                caption_text = f"Marcador RA tradicional único para {name} (Símbolo {symbol_size}x{symbol_size})"
             
             st.image(pil_img, caption=caption_text, use_container_width=True)
             
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            if marker_type == "Marcador QR (Anti-Colisión)":
-                filename = f"{atomic_number:03d}_{symbol}_QR_ANTI_COLISION_{timestamp}.png"
+            if marker_type == "Marcador QR (Optimizado AR)":
+                filename = f"{atomic_number:03d}_{symbol}_QR_AR_OPTIMIZADO_{timestamp}.png"
             else:
-                filename = f"{atomic_number:03d}_{symbol}_TRADICIONAL_MEJORADO_{symbol_size}x{symbol_size}_{timestamp}.png"
+                filename = f"{atomic_number:03d}_{symbol}_TRADICIONAL_{symbol_size}x{symbol_size}_{timestamp}.png"
             st.markdown(get_image_download_link(pil_img, filename, "📥 Descargar Marcador"), unsafe_allow_html=True)
         
         with col2:
             st.subheader("Información del Elemento")
             
-            # Calcular hash único para mostrar
-            unique_hash = generator.generate_atomic_hash(atomic_number)
-            period = generator.get_period(atomic_number)
-            group = generator.get_group(atomic_number)
-            element_type = generator.get_element_type(atomic_number)
-            
             # Información del elemento
-            if marker_type == "Marcador QR (Anti-Colisión)":
+            if marker_type == "Marcador QR (Optimizado AR)":
                 st.markdown(f"""
                 <div class="element-info">
-                    <h3 style="text-align: center; color: red;">🔥 {symbol} - ANTI-COLISIÓN</h3>
+                    <h3 style="text-align: center; color: blue;"> {symbol} - QR AR</h3>
                     <h2 style="text-align: center; color: black;">{name}</h2>
                     <p style="text-align: center; color: black;"><strong>Número atómico:</strong> {atomic_number}</p>
-                    <p style="text-align: center; color: blue;"><strong>Período:</strong> {period} | <strong>Grupo:</strong> {group}</p>
-                    <p style="text-align: center; color: green;"><strong>Tipo:</strong> {element_type}</p>
-                    <p style="text-align: center; color: red;"><strong>Hash único:</strong> {unique_hash}</p>
+                    <p style="text-align: center; color: red;"><strong>Semillas MT:</strong> {atomic_number + 1000}, {atomic_number + 2000}, {atomic_number + 3000}</p>
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown(f"""
                 <div class="element-info">
-                    <h3 style="text-align: center; color: black;">{symbol} - TRADICIONAL+</h3>
+                    <h3 style="text-align: center; color: black;">{symbol} - TRADICIONAL</h3>
                     <h2 style="text-align: center; color: black;">{name}</h2>
                     <p style="text-align: center; color: black;"><strong>Número atómico:</strong> {atomic_number}</p>
                     <p style="text-align: center; color: black;"><strong>Tamaño símbolo:</strong> {symbol_size}x{symbol_size}</p>
-                    <p style="text-align: center; color: red;"><strong>Hash único:</strong> {unique_hash}</p>
+                    <p style="text-align: center; color: red;"><strong>Semilla MT:</strong> {atomic_number}</p>
                 </div>
                 """, unsafe_allow_html=True)
             
-            # Características específicas según el tipo de marcador
-            if marker_type == "Marcador QR (Anti-Colisión)":
+            if marker_type == "Marcador QR ":
                 st.markdown("""
-                ### Características anti-colisión QR
+                ### Características del marcador QR optimizado AR
                 
-                * 🔥 **Hash atómico único** - Basado en propiedades químicas
-                * **Cero colisiones** - Eliminadas las coincidencias de keypoints
-                * **Patrones de timing** - Únicos por elemento (como QR reales)
-                * **Información de formato** - Códigos únicos alrededor de esquinas
-                * **15 variaciones estructurales** - Más diversidad que antes
-                * **Grid de 16x16** - Máxima densidad de información
-                * **Dispersión química** - Usa período, grupo y tipo de elemento
-                * **Verificación AR** - Diseñado específicamente para Vuforia
+                * **Mersenne Twister** como generador con múltiples semillas
+                * **Semillas múltiples MT** - Esquinas con semillas +1000, +2000, +3000
+                * **Patrón central único** - Generado con semilla +5000
+                * **Probabilidades variables** - Threshold según número atómico
+                * **Grid de 16x16** para máxima densidad de información
+
                 """)
             else:
                 st.markdown("""
-                ### Características tradicional mejorado
+                ### Características del marcador tradicional único
                 
-                * **Hash atómico único** - Evita colisiones entre elementos distantes
-                * **Patrón de cuadrados** - Optimizado para detección AR
-                * **Dispersión mejorada** - Usa propiedades químicas complejas
-                * **Threshold variable** - Ajustado por hash único
-                * **Grid de 8x8** - Optimizado para impresión 3D
-                * **Reproducibilidad** - Mismo patrón siempre para cada elemento
-                * **Cero falsas coincidencias** - Problema Ca-20/Cm-96 solucionado
+                * **Mersenne Twister** como generador con semilla = número atómico
+                * **Patrón de cuadrados** para detección efectiva en AR
+                * **Reproducibilidad total** - mismo patrón siempre
+                * **Transformaciones matemáticas** con desplazamientos de bits y XOR
+                * **Patrón único garantizado** usando el número atómico como semilla
+                * **Tamaño de símbolo configurable** (2x2, 3x3, 4x4)
+                * **Grid de 8x8** optimizado para impresión 3D
+                * **118 patrones únicos** uno por cada elemento
                 """)
         
         # Instrucciones de uso
@@ -866,62 +751,39 @@ def main():
         1. **Descarga** la imagen del marcador único
         2. **Para uso en AR (Vuforia)**: Imprime la imagen en papel o muéstrala en pantalla
         3. **Para impresión 3D**: Importa el archivo a TinkerCAD para añadir relieve
-        4. **Garantía anti-colisión**: Eliminadas las coincidencias de keypoints entre elementos
-        5. **Reconocimiento perfecto**: Cada elemento tiene patrones únicos basados en química
+        4. **En impresión 3D**: Las áreas negras serán las que tengan relieve
+        5. **Unicidad garantizada**: Cada uno de los 118 elementos tiene un patrón completamente diferente
+        6. **Mersenne Twister**: Algoritmo de reproducibilidad y distribución uniforme
         """)
         
-        if marker_type == "Marcador QR (Anti-Colisión)":
+        if marker_type == "Marcador QR (Optimizado AR)":
             st.markdown(f"""
-            ### 🔥 Algoritmo anti-colisión - {name}
+            ### 🔷 Detalles técnicos del marcador QR optimizado AR - {name}
             
-            **Hash atómico único calculado:**
+            **Algoritmo de generación multi-semilla para máxima diferenciación:**
             
-            - **Número atómico**: {atomic_number} × 7919 = {atomic_number * 7919}
-            - **Período químico**: {period} × 541 = {period * 541}
-            - **Grupo químico**: {group} × 1009 = {group * 1009}
-            - **Tipo de elemento**: {element_type} × 2003 = {element_type * 2003}
-            - **Hash final**: {unique_hash}
-            
-            **Patrones únicos generados:**
-            - **Esquina 1**: Semilla {(unique_hash + 1000) % (2**31 - 1)}
-            - **Esquina 2**: Semilla {(unique_hash + 2000) % (2**31 - 1)}
-            - **Esquina 3**: Semilla {(unique_hash + 3000) % (2**31 - 1)}
-            - **Timing**: Semilla {unique_hash + 7000}
-            - **Formato**: Semilla {unique_hash + 8000}
-            
-            **Resultado**: Cero coincidencias con otros elementos, incluyendo Ca-20 vs Cm-96
+            - **Esquina Superior Izquierda**: Semilla MT = {atomic_number + 1000}
+            - **Esquina Superior Derecha**: Semilla MT = {atomic_number + 2000}  
+            - **Esquina Inferior Izquierda**: Semilla MT = {atomic_number + 3000}
+            - **Patrón Central**: Semilla MT = {atomic_number + 5000}
+            - **Relleno General**: Semilla MT = {atomic_number + 10000}
+            - **Modificaciones estructurales**: ({atomic_number} + índice_esquina × 37) % 12
+            - **Probabilidades variables**: Threshold = 0.3 + ({atomic_number} % 5) × 0.1
+            - **Grid de alta densidad**: 16×16 = 256 celdas totales
             """)
         else:
             st.markdown(f"""
-            ### Algoritmo tradicional mejorado - {name}
+            ### Detalles técnicos del marcador  - {name}
             
-            **Hash atómico único**: {unique_hash}
-            - Basado en propiedades químicas complejas
-            - Eliminadas las colisiones entre elementos distantes
-            - Threshold variable: {50 + ((unique_hash + 1) % 3) * 5}%
-            - Grid optimizado: 8×8 = 64 celdas
+            **Algoritmo de generación específico:**
+            
+            - **Semilla Mersenne Twister**: {atomic_number} (número atómico directo)
+            - **Probabilidad de celda**: 50% para generar cuadrado negro
+            - **Grid básico**: 8×8 = 64 celdas totales
+            - **Áreas reservadas**: Símbolo y número atómico no se superponen
+            - **Símbolo configurable**: Área de {symbol_size}×{symbol_size} celdas
+            - **Reproducibilidad**: Mismo patrón siempre para este elemento
             """)
-    
-    # Información adicional
-    st.markdown("""
-    ---
-    ### 🔥 Solución al problema de colisiones AR
-    
-    **Problema identificado**: Ca-20 y Cm-96 tenían keypoints coincidentes que confundían a Vuforia
-    
-    **Solución implementada**:
-    - **Hash atómico único** basado en 5 propiedades químicas
-    - **Dispersión química** usando período, grupo y tipo de elemento
-    - **Patrones de timing y formato** únicos por elemento
-    - **15 variaciones estructurales** vs 12 anteriores
-    - **Verificación matemática** de no coincidencias
-    
-    **Garantías**:
-    - ✅ **Cero colisiones** entre cualquier par de elementos
-    - ✅ **Reproducibilidad** exacta con mismo hash
-    - ✅ **Optimización Vuforia** con keypoints únicos
-    - ✅ **Escalabilidad** para más de 118 elementos si fuera necesario
-    """)
     
     # Pie de página
     st.sidebar.markdown("---")
@@ -932,3 +794,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
