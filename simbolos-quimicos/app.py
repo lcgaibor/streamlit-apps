@@ -278,7 +278,7 @@ def main():
         else:  # Por número atómico
             # Selector de número atómico
             numero_seleccionado = st.number_input(
-                " Ingresa un número atómico:",
+                "🧪 Ingresa un número atómico:",
                 min_value=1,
                 max_value=118,
                 value=1,
@@ -341,6 +341,9 @@ def main():
             
             # Botón de descarga
             imagen_bytes = imagen_a_bytes(st.session_state.imagen_generada)
+            
+            # Crear nombre de archivo dinámico con el símbolo
+            nombre_archivo = f"{st.session_state.simbolo_actual}.png"
             
             st.download_button(
                 label="⬇️ Descargar PNG",
