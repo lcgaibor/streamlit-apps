@@ -345,7 +345,7 @@ def main():
             st.download_button(
                 label="⬇️ Descargar PNG",
                 data=imagen_bytes,
-                file_name="logo_elemento.png",
+                file_name=nombre_archivo,
                 mime="image/png",
                 type="secondary"
             )
