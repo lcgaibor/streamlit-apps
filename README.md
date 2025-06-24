@@ -16,6 +16,16 @@ Un dashboard interactivo para visualizar y analizar riesgos en diferentes activo
 Aplicación web minimalista que genera imágenes PNG de símbolos de elementos químicos con diseño limpio y profesional.
 - [Ver código](./generador-simbolos-quimicos/)
 
+### 4. Redimensionador de Imágenes
+Una aplicación web para redimensionar imágenes de forma masiva manteniendo las proporciones originales.
+- [Ver código](./image-resizer/)
+
+
+### 5. Compresor de Imágenes
+Aplicación para comprimir imágenes reduciendo su tamaño y peso con calidad ajustable.
+- [Ver código](./image-compressor/)
+
+
 ## Cómo ejecutar las aplicaciones
 
 Cada aplicación tiene su propio directorio con instrucciones y dependencias específicas en su README.md.
