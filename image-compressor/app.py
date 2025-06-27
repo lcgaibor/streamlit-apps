@@ -261,7 +261,7 @@ def main():
                     try:
                         thumbnail = image.copy()
                         thumbnail.thumbnail((150, 150))
-                        st.image(thumbnail, use_column_width=True)
+                        st.image(thumbnail, use_container_width=True)
                     except Exception as e:
                         st.error(f"Error al mostrar miniatura: {str(e)}")
                 
