@@ -126,6 +126,7 @@ ELEMENTOS = {
     "Copernicio": {"simbolo": "Cn", "numero": 112},
     "Nihonio": {"simbolo": "Nh", "numero": 113},
     "Flerovio": {"simbolo": "Fl", "numero": 114},
+    "Moscovio": {"simbolo": "Mc", "numero": 115},
     "Livermorio": {"simbolo": "Lv", "numero": 116},
     "Oganesón": {"simbolo": "Og", "numero": 118}
 }
